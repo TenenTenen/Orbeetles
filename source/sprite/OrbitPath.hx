@@ -10,50 +10,44 @@ import flixel.FlxSprite;
 import flixel.math.FlxPoint;
 import flixel.group.FlxGroup;
 
-typedef ClosestPointData = {
-    var point : FlxPoint;
-    var index : Int;
-    var dist : Float;
-}
-
 class OrbitPath extends FlxGroup{
 
-    var wayPointSprites:FlxGroup;
-    var waypoints:Array<FlxPoint>;
-    var actualPath:Array<FlxPoint>;
+    var waypointSprites:FlxGroup;
+    var waypointCircle:FlxSprite;
+    public var waypoints:Array<FlxPoint>;
+    public var actualPath:Array<FlxPoint>;
 
-
-    var speed:Float = 45;
-    var orbitRadius:Float;
+    public var orbitRadius:Float;
 
     var center:FlxPoint;
 
-    public var moon:FlxSprite;
-    public var moonIsActive:Bool = false;
+    public var parentMoon:Moon;
 
-    override public function new(radius, centerX, centerY){
+    override public function new(radius, centerX, centerY, parentMoon){
         super();
         center = FlxPoint.get(centerX, centerY);
+        this.parentMoon = parentMoon;
         orbitRadius = radius;
         waypoints = getCirclePoints(center, orbitRadius, true);
-		wayPointSprites = new FlxGroup();
+		waypointSprites = new FlxGroup();
         waypoints.map(wayPoint->{
-			var s = new FlxSprite(wayPoint.x-2, wayPoint.y-2).makeGraphic(4, 4, FlxColor.WHITE);
-			s.alpha = 0.65;
-			wayPointSprites.add(s);
+			var s = new FlxSprite(wayPoint.x-3, wayPoint.y-3).makeGraphic(6, 6, FlxColor.LIME);
+			s.alpha = 0.3;
+			waypointSprites.add(s);
 			return s;
         });
+        waypointCircle = new FlxSprite().makeGraphic(Std.int(orbitRadius*2.2), Std.int(orbitRadius*2.2), FlxColor.TRANSPARENT);
+        waypointCircle.alpha = 0.3;
+        FlxSpriteUtil.drawCircle(waypointCircle, -1, -1, orbitRadius, FlxColor.TRANSPARENT, {color: FlxColor.LIME, thickness: 2});
+        if(parentMoon != null){
+            waypointCircle.setPosition(parentMoon.x + parentMoon.width/2-waypointCircle.width/2, parentMoon.y+parentMoon.height/2-waypointCircle.height/2);
+        }else{
+            waypointCircle.setPosition(center.x-waypointCircle.width/2, center.y-waypointCircle.height/2);
+        }
         
-        add(wayPointSprites);
-
-
-        moon = new FlxSprite();
-        moon.makeGraphic(38, 38, FlxColor.TRANSPARENT);
-        FlxSpriteUtil.drawCircle(moon, -1, -1, -1, FlxColor.GRAY.getLightened());
-        add(moon);
-
-        //moon.angularVelocity = 14;
-
+        waypointCircle.visible = false;
+        add(waypointCircle);
+        add(waypointSprites);
     }
 
     public function setRadius(radius){
@@ -62,63 +56,44 @@ class OrbitPath extends FlxGroup{
             waypoints.pop().put();
         }
 
-        for(w in wayPointSprites){
+        for(w in waypointSprites){
             w.destroy();
         }
-        wayPointSprites.clear();
+        waypointSprites.clear();
+
+        waypointCircle.makeGraphic(Std.int(orbitRadius*2.2), Std.int(orbitRadius*2.2), FlxColor.TRANSPARENT);
+        waypointCircle.alpha = 0.3;
+        FlxSpriteUtil.drawCircle(waypointCircle, -1, -1, orbitRadius, FlxColor.TRANSPARENT, {color: FlxColor.LIME, thickness: 2});
+        if(parentMoon != null){
+            waypointCircle.setPosition(parentMoon.x + parentMoon.width/2-waypointCircle.width/2, parentMoon.y+parentMoon.height/2-waypointCircle.height/2);
+        }else{
+            waypointCircle.setPosition(center.x-waypointCircle.width/2, center.y-waypointCircle.height/2);
+        }
 
         waypoints = getCirclePoints(center, orbitRadius, true);
         waypoints.map(wayPoint->{
-            var s = new FlxSprite(wayPoint.x-2, wayPoint.y-2).makeGraphic(4, 4, FlxColor.WHITE);
-            s.alpha = 0.65;
-            wayPointSprites.add(s);
+            var s = new FlxSprite(wayPoint.x-3, wayPoint.y-3).makeGraphic(6, 6, FlxColor.LIME);
+            if(parentMoon != null){
+                s.setPosition(parentMoon.x + parentMoon.width/2 + wayPoint.x-2, parentMoon.y+parentMoon.height/2+wayPoint.y-2);
+            }
+            s.alpha = 0.3;
+            waypointSprites.add(s);
             return s;
         });
 
-        var closestWayPoint = getClosestPointAndIndex(FlxG.mouse.getPosition(), waypoints).point;
-        moon.setPosition(closestWayPoint.x-moon.width/2, closestWayPoint.y - moon.height/2);
+        
         
     }
 
-    public function startMoon(){
-        setPathWithStartingPoint(moon, actualPath);
-        moon.setPosition(moon.path.nodes[0].x-moon.width/2, moon.path.nodes[0].y - moon.height/2);
-        moon.path.start(null, speed, FlxPath.LOOP_FORWARD);
-        
-
-        for(w in wayPointSprites){
-            cast(w, FlxSprite).alpha = 0.3;
-        }
-
-        moonIsActive = true;
+    public function showDots() {
+        waypointSprites.visible = true;
+        waypointCircle.visible = false;
     }
 
-    public function setPathWithStartingPoint(sprite:FlxSprite, nodes:Array<FlxPoint>){
-        var startPointData = getClosestPointAndIndex(sprite.getMidpoint(), nodes);
-        var nodesCopy = nodes.copy();
-        var newPath = nodesCopy.splice(startPointData.index, nodesCopy.length).concat(nodesCopy);
-
-        sprite.path = new FlxPath(newPath);
-
+    public function showCircle() {
+        waypointSprites.visible = false;
+        waypointCircle.visible = true;
     }
-
-    public function getClosestPointAndIndex(src:FlxPoint, pointList:Array<FlxPoint>):ClosestPointData{
-        var closestPoint:FlxPoint = null;
-        var minDist:Float = 0;
-        var index:Int = 0;
-
-        for(p in 0...pointList.length){
-            var d = src.distanceTo(pointList[p]);
-            if(closestPoint == null || d < minDist){
-                closestPoint = pointList[p];
-                index = p;
-                minDist = d;
-            }
-        }
-
-        return {point: closestPoint, index: index, dist: minDist};
-    }
-
 
     public function computeActualPath(){
         actualPath = getCirclePoints(center, orbitRadius);
@@ -137,6 +112,35 @@ class OrbitPath extends FlxGroup{
 			points.push(FlxPoint.get(center.x + v.x, center.y + v.y));
 		}
 
+        return points;   
+    }
+
+    function getEllipticalPoints(center:FlxPoint, distA:Float, distB:Float, wayPointMode:Bool = false):Array<FlxPoint>{
+		var points = [];
+
+		var circumfrence:Float =2*Math.PI*Math.sqrt((distA * distA + distB * distB) / (2 * 1.0));  
+		var numPoints =  Math.floor(circumfrence / (wayPointMode ? 40 : 6));
+		for(i in 0...numPoints){
+			var t = (2*Math.PI/numPoints)*i;
+			var x = distA*Math.cos(t);
+			var y = distB*Math.sin(t);
+			var p = new FlxPoint(center.x + x, center.y + y);
+			p.rotate(center, 45);
+			points.push(p);
+			
+		}
+
 		return points;
 	}
+    
+    override function update(elapsed:Float) {
+        super.update(elapsed);
+        if(parentMoon != null){
+            for(i in 0...waypointSprites.length){
+                var w = cast(waypointSprites.members[i], FlxSprite);
+                w.setPosition(parentMoon.x + parentMoon.width/2 + waypoints[i].x, parentMoon.y+parentMoon.height/2+waypoints[i].y);
+            }
+            waypointCircle.setPosition(parentMoon.x + parentMoon.width/2-waypointCircle.width/2, parentMoon.y+parentMoon.height/2-waypointCircle.height/2);
+        }
+    }
 }
