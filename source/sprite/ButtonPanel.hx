@@ -19,7 +19,7 @@ class ButtonPanel extends FlxTypedSpriteGroup<FlxSprite> {
     var buttonStart:FlxPoint = FlxPoint.get(28, 22);
     var buttonSpacer:FlxPoint = FlxPoint.get(8, 8);
 
-    var helpText:ToolTip;
+    public var helpText:ToolTip;
     var buyDescriptionText:ToolTip;
 
     var currentHoverButton:PanelButton = null;
@@ -37,7 +37,7 @@ class ButtonPanel extends FlxTypedSpriteGroup<FlxSprite> {
 
         add(panelBg);
 
-        setHelpText("Add a moon by clicking on one of\nthe buttons in this panel!");
+        setHelpText("Add a moon by clicking on one of the\nbuttons in this panel! Click a moon\nto add weapons.");
         //setDescriptionText();
 
         loadButtons();

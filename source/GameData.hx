@@ -17,4 +17,9 @@ class GameData{
     private function new() {
     }
 
+    public function reset(){
+        dayIndex = 0;
+        playerCredits = 5500;
+    }
+
 }

@@ -19,7 +19,7 @@ class DayCounter extends FlxTypedSpriteGroup<FlxSprite> {
 
     var buttonStart:FlxPoint = FlxPoint.get(28, 22);
 
-    var helpText:ToolTip;
+    public var helpText:ToolTip;
 
     var currentHoverButton:UIButton = null;
 
@@ -73,11 +73,27 @@ class DayCounter extends FlxTypedSpriteGroup<FlxSprite> {
 
         readyButton = new UIButton(AssetPaths.button_ready_up__png, AssetPaths.button_ready_down__png);
         add(readyButton);
+        readyButton.cameras = [uiCam];
         readyButton.x = panelBg.x + 197;
         readyButton.y = panelBg.y + 152;
 
-        //setHelpText("Add a moon by clicking on one of\nthe buttons in this panel!");
+        setHelpText("When you're ready, start the wave.\nRun out of credits and you lose!");
+        helpText.arrowDirection = LEFT;
+        helpText.setPositionByArrow(panelBg.x + panelBg.width + 20, FlxG.height - 70);
         
+    }
+
+    public function setHelpText(message:String){
+        var v = true;
+        if(this.members.indexOf(helpText) != -1){
+            v =  helpText.visible;
+            this.remove(helpText);
+        }
+
+        helpText = new ToolTip(message, uiCam);
+		helpText.setPositionByArrow(panelBg.x - 18, panelBg.y+panelBg.height - 48);
+        add(helpText);
+        helpText.visible = v;
     }
 
     override function update(elapsed:Float) {

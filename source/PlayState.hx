@@ -116,8 +116,10 @@ class PlayState extends FlxState
 		FlxG.camera.deadzone.set((FlxG.camera.width - selectedBody.width) / 2, (FlxG.camera.height - selectedBody.height) / 2, selectedBody.width, selectedBody.height);
 		mainCam.zoom = 0.9;
 
-		FlxG.sound.playMusic(AssetPaths.drone__ogg);
-		FlxG.sound.music.fadeIn(3, 0, 0.2);
+		if(FlxG.sound.music == null){
+			FlxG.sound.playMusic(AssetPaths.drone__ogg);
+			FlxG.sound.music.fadeIn(3, 0, 0.2);
+		}
 
 		bg1 = new FlxSprite().loadGraphic(AssetPaths.backdrop_layer0__png);
 		bg2 = new FlxSprite().loadGraphic(AssetPaths.backdrop_layer1__png);
@@ -184,25 +186,29 @@ class PlayState extends FlxState
 		FlxG.overlap(bullets, enemies, (b, e)->{
 			bullets.remove(b);
 			enemies.remove(e);
+			b.kill();
+			e.kill();
 		});
 
 		FlxG.overlap(lasers, enemies, (l, e)->{
 			enemies.remove(e);
+			e.kill();
 		});
 
 		buttonPanel.handleButtonsHover();
 		if(FlxG.mouse.justPressed){
 
 			var buttonWasPressed = false;
-			buttonPanel.handleButtonsClick((mType) -> {
-				buttonWasPressed = true;
-				addNewMoon(mType);
-			}, null);
-
-			dayCounter.handleButtonsClick(() -> {
-				buttonWasPressed = true;
-				startNextWave();
-			}, null);
+			if(currentEditingMoon == null){
+				buttonPanel.handleButtonsClick((mType) -> {
+					buttonWasPressed = true;
+					addNewMoon(mType);
+				}, null);
+				dayCounter.handleButtonsClick(() -> {
+					buttonWasPressed = true;
+					startNextWave();
+				}, null);
+			}
 
 			if(!buttonWasPressed && currentEditingMoon != null){
 				FlxG.sound.play(AssetPaths.purchase_register__ogg, 0.5).fadeOut();
@@ -231,6 +237,9 @@ class PlayState extends FlxState
 						}
 						selectedBody = moon;
 						buttonPanel.loadButtons(true, [MoonType.MISSILE, MoonType.LASER].indexOf(moon.moonType) != -1);
+						if(isMoving){
+							buttonPanel.loadButtons(false, true);
+						}
 						moonDisplay.updateMoon(moon);
 						trace(Type.getClassName(Type.getClass(moon)), moon.speed);
 						uiCam.flash(0x80FFFFFF, 0.3, null, true);
@@ -246,6 +255,9 @@ class PlayState extends FlxState
 					somethingSelected = true;
 					selectedBody = planet;
 					buttonPanel.loadButtons(false);
+					if(isMoving){
+						buttonPanel.loadButtons(false, true);
+					}
 					moonDisplay.updateMoon(planet);
 					uiCam.flash(0x80FFFFFF, 0.3, null, true);
 					FlxG.sound.play(AssetPaths.shutter_1__ogg, 0.5);
@@ -260,6 +272,8 @@ class PlayState extends FlxState
 		if(isMoving){
 			checkForEndOfWave();
 		}
+
+		checkForGameOver();
 
 		if(FlxG.keys.justPressed.W){
 			displayOrbitPaths = !displayOrbitPaths;
@@ -345,11 +359,20 @@ class PlayState extends FlxState
 			return;
 		});
 	}
+
+	public function checkForGameOver(){
+		if(GameData.g.playerCredits < 0){
+			FlxG.switchState(new GameOverState());
+		}
+	}
 	
 	public function startNextWave(){
 		isMoving = true;
 		FlxTween.tween(dayCounter, {y: dayCounter.y + 144}, 0.8, {startDelay: 0.15, ease: FlxEase.backOut});
-		enemySpawner.startWave([new EnemyWave(5, 5)]);
+		buttonPanel.loadButtons(false, true);
+		buttonPanel.helpText.visible = false;
+		dayCounter.helpText.visible = false;
+		enemySpawner.startWave([new EnemyWave((GameData.g.dayIndex+1)*4, (GameData.g.dayIndex+1)*8), new EnemyWave(0, 8), new EnemyWave((GameData.g.dayIndex+1)*4, (GameData.g.dayIndex+1)*4)]);
 		for(moon in moons){
 			if(!moon.isMoving){
 				moon.startMoon();
@@ -366,11 +389,15 @@ class PlayState extends FlxState
 			isMoving = false;
 			enemies.clear();
 			dayCounter.readyButton.up();
+			
 			GameData.g.dayIndex++;
 			FlxTween.tween(GameData.g, {playerCredits: GameData.g.playerCredits + GameData.g.salary}, 1.5);
 			FlxG.sound.play(AssetPaths.purchase_register__ogg, 0.5).fadeOut();
 			FlxTween.tween(dayCounter, {y: dayCounter.y - 144}, 0.8, {startDelay: 1.5, ease: FlxEase.backOut});
 			new FlxTimer().start(1.5, (_) ->{
+				selectedBody = planet;
+				buttonPanel.loadButtons(false);
+				moonDisplay.updateMoon(planet);
 				for(moon in moons){
 					if(moon.isMoving){
 						moon.stopMoon();

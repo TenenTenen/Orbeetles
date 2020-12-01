@@ -15,6 +15,7 @@ enum ArrowDirection{
     ABOVE;
     BELOW;
     RIGHT;
+    LEFT;
 }
 
 
@@ -47,6 +48,10 @@ class ToolTip extends FlxSliceSprite{
             arrow.angle = -90;
         }
 
+        if(arrowDirection == LEFT){
+            arrow.angle = 90;
+        }
+
         if(arrowDirection == ABOVE){
             arrow.angle = 180;
         }
@@ -73,6 +78,13 @@ class ToolTip extends FlxSliceSprite{
             this.y = newY - this.height/2;
         }
 
+        if(arrowDirection == LEFT){
+            arrow.angle = 90;
+
+            this.x = newX + (arrow.height - arrowOffset);
+            this.y = newY - this.height/2;
+        }
+
         if(arrowDirection == BELOW){
             arrow.angle = 0;
 
@@ -96,6 +108,11 @@ class ToolTip extends FlxSliceSprite{
 
         if(arrowDirection == RIGHT){
             arrow.x = this.x+this.width-arrowOffset;
+            arrow.y = this.y + this.height/2 - arrow.height/2;
+        }
+
+        if(arrowDirection == LEFT){
+            arrow.x = this.x-arrow.width+arrowOffset;
             arrow.y = this.y + this.height/2 - arrow.height/2;
         }
 

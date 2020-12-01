@@ -88,6 +88,15 @@ class Moon extends FlxSprite{
             entagledPathSprite = new FlxSprite().makeGraphic(1, 1, FlxColor.TRANSPARENT);
         }
         setPositionToClosestWaypoint();
+        if(getMidpoint(midpoint).y < FlxG.camera.y + FlxG.camera.height/2){
+            costToolTip.arrowDirection = ABOVE;
+            var costLoc = getMidpoint(midpoint).add(0, 65);
+            costToolTip.setPositionByArrow(costLoc.x, costLoc.y);
+        }else{
+            costToolTip.arrowDirection = BELOW;
+            var costLoc = getMidpoint(midpoint).subtract(0, 65);
+            costToolTip.setPositionByArrow(costLoc.x, costLoc.y);
+        }
         this.alpha = 0.75;
     }
 

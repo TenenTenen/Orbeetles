@@ -1,5 +1,6 @@
 package sprite;
 
+import flixel.util.FlxTimer;
 import flixel.FlxObject;
 import flixel.math.FlxVelocity;
 import flixel.math.FlxVector;
@@ -19,6 +20,8 @@ class Enemy extends FlxSprite{
     public var goal:FlxPoint;
 
     var midpoint:FlxPoint;
+
+    var suckTimer:FlxTimer;
 
     public function new(start, goal){
         super();
@@ -46,8 +49,19 @@ class Enemy extends FlxSprite{
         var midpoint = getMidpoint(midpoint);
         if(midpoint.distanceTo(goal) <= 140){
             velocity.set(0, 0);
-            //kill();
+            if(suckTimer == null){
+                suckTimer = new FlxTimer().start(0.2, (_) -> GameData.g.playerCredits -= 3, 0);
+            }
         }
+    }
+
+    
+    override function kill() {
+        if(suckTimer != null){
+            suckTimer.cancel();
+        }
+        super.kill();
+        
     }
 
 }
