@@ -39,7 +39,7 @@ class OrbitPath extends FlxGroup{
         waypointCircle = new FlxSprite().makeGraphic(Std.int(orbitRadius*2.2), Std.int(orbitRadius*2.2), FlxColor.TRANSPARENT);
         waypointCircle.alpha = 0.3;
         FlxSpriteUtil.drawCircle(waypointCircle, -1, -1, orbitRadius, FlxColor.TRANSPARENT, {color: FlxColor.LIME, thickness: 2});
-        if(parentMoon != null){
+        if(parentMoon.moonType != MoonType.PLANET){
             waypointCircle.setPosition(parentMoon.x + parentMoon.width/2-waypointCircle.width/2, parentMoon.y+parentMoon.height/2-waypointCircle.height/2);
         }else{
             waypointCircle.setPosition(center.x-waypointCircle.width/2, center.y-waypointCircle.height/2);
@@ -64,7 +64,7 @@ class OrbitPath extends FlxGroup{
         waypointCircle.makeGraphic(Std.int(orbitRadius*2.2), Std.int(orbitRadius*2.2), FlxColor.TRANSPARENT);
         waypointCircle.alpha = 0.3;
         FlxSpriteUtil.drawCircle(waypointCircle, -1, -1, orbitRadius, FlxColor.TRANSPARENT, {color: FlxColor.LIME, thickness: 2});
-        if(parentMoon != null){
+        if(parentMoon.moonType != MoonType.PLANET){
             waypointCircle.setPosition(parentMoon.x + parentMoon.width/2-waypointCircle.width/2, parentMoon.y+parentMoon.height/2-waypointCircle.height/2);
         }else{
             waypointCircle.setPosition(center.x-waypointCircle.width/2, center.y-waypointCircle.height/2);
@@ -73,7 +73,7 @@ class OrbitPath extends FlxGroup{
         waypoints = getCirclePoints(center, orbitRadius, true);
         waypoints.map(wayPoint->{
             var s = new FlxSprite(wayPoint.x-3, wayPoint.y-3).makeGraphic(6, 6, FlxColor.LIME);
-            if(parentMoon != null){
+            if(parentMoon.moonType != MoonType.PLANET){
                 s.setPosition(parentMoon.x + parentMoon.width/2 + wayPoint.x-2, parentMoon.y+parentMoon.height/2+wayPoint.y-2);
             }
             s.alpha = 0.3;
@@ -135,7 +135,7 @@ class OrbitPath extends FlxGroup{
     
     override function update(elapsed:Float) {
         super.update(elapsed);
-        if(parentMoon != null){
+        if(parentMoon.moonType != MoonType.PLANET){
             for(i in 0...waypointSprites.length){
                 var w = cast(waypointSprites.members[i], FlxSprite);
                 w.setPosition(parentMoon.x + parentMoon.width/2 + waypoints[i].x, parentMoon.y+parentMoon.height/2+waypoints[i].y);

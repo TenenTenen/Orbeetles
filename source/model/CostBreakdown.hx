@@ -1,4 +1,4 @@
-package sprite.model;
+package model;
 
 class CostBreakdown {
     
@@ -16,6 +16,14 @@ class CostBreakdown {
 
     public function new(){
 
+    }
+
+    public function totalCost(){
+        return baseCost + duplicateTax + distTax + sameOrbitTax;
+    }
+
+    public function toString(){
+        trace('base cost: [$baseCost]\ndistance tax: [$distIndex : $distTax]\nduplicate tax: [$duplicateIndex : $duplicateTax]\nco-orbit tax: [$sameOrbitIndex : $sameOrbitTax]');
     }
 
 

@@ -1,4 +1,6 @@
-package sprite.model;
+package model;
+
+import sprite.Moon;
 
 class Costs{
 
@@ -21,7 +23,7 @@ class Costs{
     public var SATELLITE_CO_ORBIT_TAX:Array<Int>;
 
     public static var data(get, null):Costs;
-    public static function get_data(){
+    static function get_data(){
         if(data == null) data = new Costs();
         return data;
     }
@@ -62,6 +64,7 @@ class Costs{
                     BASE_COST.set(moonType, 0);
                     DUPLICATE_TAX.set(moonType, 0);
             }
+            return true;
         });
 
     }
@@ -72,17 +75,21 @@ class Costs{
         var c = new CostBreakdown();
         c.baseCost = BASE_COST.get(newMoon.moonType);
 
-        c.distIndex = allMoons.filter(moon -> moon != newMoon && moon.moonType == newMoon.moonType).length;
-        c.duplicateTax = DUPLICATE_TAX.get(newMoon.moonType)*c.distIndex;
+        c.duplicateIndex = allMoons.filter(moon -> moon != newMoon && moon.moonType == newMoon.moonType).length;
+        c.duplicateTax = DUPLICATE_TAX.get(newMoon.moonType)*c.duplicateIndex;
 
-        c.sameOrbitIndex = parentMoon.childMoons.filter(moon -> moon != newMoon && moon.orbitPath.orbitRadius == moon.orbitPath.orbitRadius).length;
-        c.sameOrbitIndex
+        c.sameOrbitIndex = parentMoon.childMoons.filter(moon -> moon != newMoon && moon.parentMoon == newMoon.parentMoon && newMoon.orbitPath.orbitRadius == moon.orbitPath.orbitRadius).length;
+        if(c.sameOrbitIndex >= (useSateliteCost ? SATELLITE_CO_ORBIT_TAX.length : MOON_CO_ORBIT_TAX.length)){
+            var maxIndex = (useSateliteCost ? SATELLITE_CO_ORBIT_TAX.length-1 : MOON_CO_ORBIT_TAX.length-1);
+            c.sameOrbitTax = useSateliteCost ? SATELLITE_CO_ORBIT_TAX[maxIndex] : MOON_CO_ORBIT_TAX[maxIndex];
+        }else{
+            c.sameOrbitTax = useSateliteCost ? SATELLITE_CO_ORBIT_TAX[c.sameOrbitIndex] : MOON_CO_ORBIT_TAX[c.sameOrbitIndex];
+        }
 
+        c.distIndex = parentMoon.getOrbitDistances().indexOf(Std.int(newMoon.orbitPath.orbitRadius));
+        c.distTax = useSateliteCost ? SATTELITE_ORBIT_DIST_TAX[c.distIndex] : MOON_ORBIT_DIST_TAX[c.distIndex];
         
-
-
         return c;
-
     }
 
 }

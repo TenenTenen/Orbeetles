@@ -27,14 +27,22 @@ class LaserMoon extends Moon{
 
     var parentMoonMidpoint:FlxPoint;
 
+    var turret:FlxSprite;
+
     public function new(orbitPath:OrbitPath, parentMoon:Moon){
         super(MoonType.LASER, orbitPath, parentMoon);
 
-        loadGraphic(AssetPaths.turret_missle_base__png);
-        color = FlxColor.YELLOW.getLightened(0.75);
+        loadGraphic(AssetPaths.turret_beam_base__png);
+        //color = FlxColor.YELLOW.getLightened(0.75);
+
+        turret = new FlxSprite();
+        turret.loadGraphic(AssetPaths.turret_beam_top_flip__png, true, 64, 64);
+        turret.animation.add("pulse", [0, 1, 2, 3], 20);
+        turret.animation.play("pulse");
+        turret.angularVelocity = -50;
 
         laserEmitter = new FlxEmitter(0, 0);
-        laserEmitter.makeParticles(4, 14, FlxColor.YELLOW, 400);
+        laserEmitter.loadParticles(AssetPaths.zap_flip__png, 400);
         laserEmitter.launchMode = FlxEmitterMode.CIRCLE;
         laserEmitter.speed.set(850);
         laserEmitter.angle.set(0, 360);
@@ -49,6 +57,8 @@ class LaserMoon extends Moon{
     override function update(elapsed:Float) {
         super.update(elapsed);
         laserEmitter.update(elapsed);
+        turret.update(elapsed);
+        turret.setPosition(this.x, this.y);
 
         shootOrigin = this.getMidpoint(shootOrigin);
 
@@ -70,6 +80,7 @@ class LaserMoon extends Moon{
     override  function draw() {
         super.draw();
         laserEmitter.draw();
+        turret.draw();
     }
 
 
@@ -81,10 +92,12 @@ class LaserMoon extends Moon{
 
         if(!laserEmitter.emitting){
             laserEmitter.start(false, 0.002);
+            turret.angularVelocity = -300;
         }
 
         new FlxTimer().start(1.0, (_)-> {
             laserEmitter.kill();
+            turret.angularVelocity = -50;
             shootCoolDownTimer = shootCoolDown;//reset timer
         });
 

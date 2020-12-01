@@ -27,7 +27,7 @@ class MissileMoon extends Moon{
     public function new(orbitPath:OrbitPath, parentMoon:Moon){
         super(MoonType.MISSILE, orbitPath, parentMoon);
         loadGraphic(AssetPaths.turret_missle_base__png);
-        color = FlxColor.RED.getLightened(0.75);
+        //color = FlxColor.RED.getLightened(0.75);
 
 
         turret = new FlxSprite();
@@ -39,7 +39,6 @@ class MissileMoon extends Moon{
     override function update(elapsed:Float) {
         super.update(elapsed);
         turret.update(elapsed);
-
         turret.setPosition(this.x, this.y);
         
         if(isMoving){
@@ -71,8 +70,8 @@ class MissileMoon extends Moon{
             }
         });
 
-        //otherwise, just face closest enemy{
-        if(closestEnemy != null){
+        //just face closest enemy
+        if(closestEnemy != null && dist <= shootRange*2.5){
             currentMidpoint = closestEnemy.getMidpoint(currentMidpoint);
             var dir = FlxVector.get();
             dir.set(currentMidpoint.x-shootOrigin.x, currentMidpoint.y-shootOrigin.y);

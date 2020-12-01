@@ -1,5 +1,7 @@
 package sprite;
 
+import model.CostBreakdown;
+import sprite.Tooltip.ToolTip;
 import flixel.math.FlxVector;
 import flixel.FlxG;
 import flixel.util.FlxPath;
@@ -23,7 +25,7 @@ class Moon extends FlxSprite{
     var entagledPathSprite:FlxSprite;
     public var parentMoon:Moon;
 
-    public var speed:Float = 65;
+    public var speed:Float = 68;
 
     public var orbitPath:OrbitPath;
     var startingWaypoint:FlxPoint;
@@ -31,6 +33,7 @@ class Moon extends FlxSprite{
     public var isMoving = false;
 
     public var isEditing = true;
+    public var baseScale:FlxPoint;
 
     public var moonType(default, null):MoonType;
 
@@ -40,43 +43,102 @@ class Moon extends FlxSprite{
 
     public var childMoons:Array<Moon> = [];
 
+    public var costToolTip:CostToolTip;
+
+    public var midpoint:FlxPoint;
+
     public function new(moonType:MoonType, orbitPath:OrbitPath, parentMoon:Moon = null){
         super();
         this.moonType = moonType;
-        
+        this.parentMoon = parentMoon;
         this.orbitPath = orbitPath;
         loadGraphic(AssetPaths.moon_iron__png, false, 0, 0, true);
         this.angle = Random.float(-180, 180);
-        this.angularVelocity = -2.3;
+        this.angularVelocity = -3.3;
+
+        this.scale.set(0.95, 0.95);
+        costToolTip = new CostToolTip(new CostBreakdown(), this.camera);
 
         if(moonType == PLANET){
+            loadGraphic(AssetPaths.planet__png, false, 0, 0, true);
+            this.angularVelocity = -2.3;
+            costToolTip.visible = false;
             return;
         }
 
-        if(parentMoon != null){
+        if(moonType == FIRE){
+            loadGraphic(AssetPaths.moon_fire__png, false, 0, 0, true);
+            this.scale.set(0.75,0.75);
+            this.speed *= 1.25;
+        }else if(moonType == ICE){
+            loadGraphic(AssetPaths.moon_ice__png, false, 0, 0, true);
+            this.scale.set(1.15, 1.15);
+            this.speed *= 0.75;
+        }
+
+        this.scale.x *= Random.float(0.92, 1.08);
+        this.scale.y *= Random.float(0.92, 1.08);
+
+        baseScale = FlxPoint.get(this.scale.x, this.scale.y);
+        this.scale.x *= 1.15;
+        this.scale.y *= 1.15;
+
+        if(parentMoon.moonType != MoonType.PLANET){
             this.parentMoon = parentMoon;
             entagledPathSprite = new FlxSprite().makeGraphic(1, 1, FlxColor.TRANSPARENT);
         }
         setPositionToClosestWaypoint();
+        this.alpha = 0.75;
     }
 
     override function update(elapsed:Float) {
         super.update(elapsed);
+        
+        if(getMidpoint(midpoint).y < FlxG.camera.y + FlxG.camera.height/2){
+            costToolTip.arrowDirection = ABOVE;
+            var costLoc = getMidpoint(midpoint).add(0, 65);
+            costToolTip.setPositionByArrow(costLoc.x, costLoc.y);
+        }else{
+            costToolTip.arrowDirection = BELOW;
+            var costLoc = getMidpoint(midpoint).subtract(0, 65);
+            costToolTip.setPositionByArrow(costLoc.x, costLoc.y);
+        }
+        
+
+        if(moonType == PLANET){
+            costToolTip.visible = false;
+        }
 
         if(entagledPathSprite != null) {
             entagledPathSprite.update(elapsed);
         }
 
         if(isMoving){
-            if(parentMoon != null){
+            if(parentMoon.moonType != MoonType.PLANET){
                 this.setPosition(parentMoon.x + parentMoon.width/2 + entagledPathSprite.x -this.width/2, parentMoon.y+parentMoon.height/2+entagledPathSprite.y-this.height/2);
             }
         }
     }
 
+    public function updateCost(c:CostBreakdown){
+        costToolTip.setCost(c);
+    }
+
+    override function draw() {
+        super.draw();
+    }
+
+    public function donEditing(){
+        this.isEditing = false;
+        this.orbitPath.showCircle();
+        this.scale.set(baseScale.x, baseScale.y);
+        this.alpha = 1.0;
+        costToolTip.visible = false;
+    }
+
     public function setPositionToClosestWaypoint(){
         var closestWaypoint:FlxPoint;
-        if(parentMoon == null){
+        if(parentMoon.moonType == MoonType.PLANET){
             closestWaypoint = getClosestPointAndIndex(FlxG.mouse.getPosition(), orbitPath.waypoints).point;
             if(closestWaypoint == null){
                 return;
@@ -102,7 +164,7 @@ class Moon extends FlxSprite{
 
     public function startMoon(){     
         orbitPath.computeActualPath();  
-        if(parentMoon == null){
+        if(parentMoon.moonType == MoonType.PLANET){
             setPathWithStartingPoint(this, orbitPath.actualPath);
             resetPositionToPathStart();
             trace(Type.getClassName(Type.getClass(this)), speed);
@@ -123,7 +185,7 @@ class Moon extends FlxSprite{
     }
 
     public function resetPositionToPathStart(){
-        if(parentMoon == null){
+        if(parentMoon.moonType == MoonType.PLANET){
             this.path.cancel();
             setPosition(this.path.nodes[0].x-this.width/2, this.path.nodes[0].y - this.height/2);
         }else{
@@ -165,5 +227,14 @@ class Moon extends FlxSprite{
 
     public function getMaxOrbitDist(){
         return getMinOrbitDist()+orbitStep*(numOrbits-1);
+    }
+
+    public function getOrbitDistances():Array<Int>{
+        var dists:Array<Int> = [];
+        for(i in 0...numOrbits){
+            dists.push(Std.int(getMinOrbitDist() + orbitStep*i));
+        }
+
+        return dists;
     }
 }
